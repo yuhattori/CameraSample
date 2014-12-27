@@ -30,7 +30,7 @@ public class CamerSurfaceView extends SurfaceView implements Callback {
 	public void surfaceCreated(SurfaceHolder holder) {
 		try {
 			mCamera = Camera.open();
-			mCamera.setDisplayOrientation(90);
+			mCamera.setDisplayOrientation(90);//デフォルトで横画面になっているため
 			mCamera.setPreviewDisplay(holder);
 		} catch (IOException e) {
 			Log.d(TAG, "カメラの取得に失敗しました");
@@ -57,6 +57,7 @@ public class CamerSurfaceView extends SurfaceView implements Callback {
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		mCamera.release();
+		mCamera=null;
 	}
 
 }

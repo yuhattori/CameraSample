@@ -22,15 +22,18 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
+import android.view.View;
 import android.widget.Toast;
 
 public class CamerSurfaceView extends SurfaceView implements Callback,
 		PictureCallback {
 	private static final String TAG = CamerSurfaceView.class.getSimpleName();;
 	private Camera mCamera;
+	private CamerSurfaceView mThisSurfaceView;
 	Activity mAct;
-	File mSaveDirectory;//写真保存場所
+	File mSaveDirectory;// 写真保存場所
 	String mPictureName;
+	private boolean mIsTake = false;// 撮影を連続で2回以上呼ばれないようにする
 
 	public CamerSurfaceView(Context context) {
 		super(context);
@@ -38,20 +41,40 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 		SurfaceHolder holder = getHolder();
 		holder.addCallback(this);
 		// holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+
+		// タッチイベントを設定
+		this.setOnTouchListener(new OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				if (event.getAction() == MotionEvent.ACTION_DOWN) {
+					if (!mIsTake) {
+						// 撮影中の2度押し禁止用フラグ
+						mIsTake = true;
+						// 画像取得
+						mCamera.takePicture(null, null,
+								(Camera.PictureCallback) mThisSurfaceView);
+					}
+				}
+				return true;
+			}
+		});
 	}
 
 	/**
 	 * 初期化処理
-	 * @param context 
+	 * 
+	 * @param context
 	 */
 	private void init(Context context) {
 		mAct = (Activity) context;
-		mSaveDirectory= new File(Environment.getExternalStorageDirectory()
+		mSaveDirectory = new File(Environment.getExternalStorageDirectory()
 				.getPath() + "/test");
-		
+		mThisSurfaceView = this;
+
 		if (!mSaveDirectory.exists()) {
 			mSaveDirectory.mkdir();
-			Toast.makeText(mAct, mSaveDirectory.getPath()+"写真を保存するディレクトリを作成しました。",
+			Toast.makeText(mAct,
+					mSaveDirectory.getPath() + "写真を保存するディレクトリを作成しました。",
 					Toast.LENGTH_SHORT).show();
 		}
 	}
@@ -69,7 +92,7 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 					.show();
 		}
 	}
-
+	
 	// surfaceViewが変更された時
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
@@ -97,62 +120,60 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 	@Override
 	public void onPictureTaken(byte[] data, Camera c) {
 		if (data == null) {
-            return;
-        }
-
-        // 画像保存パス
-        Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd_HHmmss");
-        String imgPath =mSaveDirectory.getPath() + "/" + sf.format(cal.getTime()) + ".jpg";
-System.out.println("");
-        // ファイル保存
-        FileOutputStream fos;
-        try {
-            fos = new FileOutputStream(imgPath, true);
-            fos.write(data);
-            fos.close();
-
-            // アンドロイドのデータベースへ登録
-            // (登録しないとギャラリーなどにすぐに反映されないため)
-            registAndroidDB(imgPath);
-
-        } catch (Exception e) {
-            Log.e("Debug", e.getMessage());
-        }
-
-        fos = null;
-
-        // takePicture するとプレビューが停止するので、再度プレビュースタート
-        mCamera.startPreview();
-
-        //mIsTake = false;
-    }
-    /**
-     * アンドロイドのデータベースへ画像のパスを登録
-     * @param path 登録するパス
-     */
-    private void registAndroidDB(String path) {
-        // アンドロイドのデータベースへ登録
-        // (登録しないとギャラリーなどにすぐに反映されないため)
-        ContentValues values = new ContentValues();
-        ContentResolver contentResolver = mAct.getContentResolver();
-        values.put(Images.Media.MIME_TYPE, "image/jpeg");
-        values.put("_data", path);
-        contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-    }
-
-	private void savePicture(Bitmap bmp) {
-		// TODO 自動生成されたメソッド・スタブ
-		MediaStore.Images.Media.insertImage(getContext().getContentResolver(),
-				bmp,mPictureName, null);
-	}
-
-	@Override
-	public boolean onTouchEvent(MotionEvent me) {
-		if (me.getAction() == MotionEvent.ACTION_DOWN) {
-			mCamera.takePicture(null, null, this);
+			return;
 		}
-		return true;
+		if (mIsTake) {
+			savePicture(data);// 写真を保存
+		}
+		// takePicture するとプレビューが停止するので、再度プレビュースタート
+		mCamera.startPreview();
 	}
 
+	/**
+	 * アンドロイドのデータベースへ画像のパスを登録
+	 * 
+	 * @param path
+	 *            登録するパス
+	 */
+	private void registAndroidDB(String path) {
+		// アンドロイドのデータベースへ登録
+		ContentValues values = new ContentValues();
+		ContentResolver contentResolver = mAct.getContentResolver();
+		values.put(Images.Media.MIME_TYPE, "image/jpeg");
+		values.put("_data", path);
+		contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+				values);
+	}
+
+	/**
+	 * 写真を保存する
+	 * 
+	 * @param data
+	 *            　写真データ
+	 */
+	private void savePicture(byte[] data) {
+		Calendar cal = Calendar.getInstance();
+		SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd_HHmmss");
+		mPictureName = format.format(cal.getTime()) + ".jpg";
+
+		// 保存パス
+		String imgPath = mSaveDirectory.getPath() + "/" + mPictureName;
+		// ファイル保存
+		FileOutputStream fos;
+		try {
+			fos = new FileOutputStream(imgPath, true);
+			fos.write(data);
+			fos.close();
+
+			// アンドロイドのデータベースへ登録
+			registAndroidDB(imgPath);
+		
+			Toast.makeText(mAct, "ファイルを保存しました。", Toast.LENGTH_SHORT).show();
+		} catch (Exception e) {
+			Toast.makeText(mAct, "ファイルの保存に失敗しました。", Toast.LENGTH_SHORT).show();
+		}
+		fos = null;
+		
+		mIsTake = false;//保存終了の状態にする
+	}
 }

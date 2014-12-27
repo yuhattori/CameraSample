@@ -30,6 +30,7 @@ public class CamerSurfaceView extends SurfaceView implements Callback {
 	public void surfaceCreated(SurfaceHolder holder) {
 		try {
 			mCamera = Camera.open();
+			mCamera.setDisplayOrientation(90);
 			mCamera.setPreviewDisplay(holder);
 		} catch (IOException e) {
 			Log.d(TAG, "カメラの取得に失敗しました");
@@ -43,6 +44,7 @@ public class CamerSurfaceView extends SurfaceView implements Callback {
 			int height) {
 		Camera.Parameters p = mCamera.getParameters();
 		//p.setPreviewSize(width/2, height/2);// 機種によって画面いっぱいのサイズではプレビューできない場合がある。
+		
 		try {
 			mCamera.setParameters(p);
 			mCamera.startPreview();

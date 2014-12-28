@@ -51,9 +51,19 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 					if (!mIsTake) {
 						// 撮影中の2度押し禁止用フラグ
 						mIsTake = true;
-						// 画像取得
-						mCamera.takePicture(null, null,
-								(Camera.PictureCallback) mThisSurfaceView);
+
+						//オートフォーカスを行う
+						mCamera.autoFocus(new Camera.AutoFocusCallback() {
+							@Override
+							public void onAutoFocus(boolean success,
+									Camera camera) {
+								// 画像取得
+								mCamera.takePicture(
+										null,
+										null,
+										(Camera.PictureCallback) mThisSurfaceView);
+							}
+						});
 					}
 				}
 				return true;

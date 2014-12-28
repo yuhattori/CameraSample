@@ -52,11 +52,15 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 						// 撮影中の2度押し禁止用フラグ
 						mIsTake = true;
 
-						//オートフォーカスを行う
+						// オートフォーカスを行う
 						mCamera.autoFocus(new Camera.AutoFocusCallback() {
 							@Override
 							public void onAutoFocus(boolean success,
 									Camera camera) {
+								if (!success) {
+									Toast.makeText(mAct, "オートフォーカスに失敗しました",
+											Toast.LENGTH_SHORT).show();
+								}
 								// 画像取得
 								mCamera.takePicture(
 										null,
@@ -124,8 +128,10 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 	// SurfaceViewが終了した時
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
-		mCamera.release();
-		mCamera = null;
+		mCamera.setPreviewCallback(null); // コールバックの停止
+		mCamera.stopPreview(); // プレビューの停止
+		mCamera.release(); // カメラリソースの停止
+		mCamera = null; // カメラオブジェクトの停止
 	}
 
 	@Override

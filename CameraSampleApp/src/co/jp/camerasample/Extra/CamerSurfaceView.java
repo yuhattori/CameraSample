@@ -32,12 +32,13 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 	private CamerSurfaceView mThisSurfaceView;
 	Activity mAct;
 	File mSaveDirectory;// 写真保存場所
-	String mPictureName;
+	String mPictureName;// 写真の名前
 	private boolean mIsTake = false;// 撮影を連続で2回以上呼ばれないようにする
 
 	public CamerSurfaceView(Context context) {
 		super(context);
 		init(context);
+
 		SurfaceHolder holder = getHolder();
 		holder.addCallback(this);
 		// holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -67,11 +68,12 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 	 */
 	private void init(Context context) {
 		mAct = (Activity) context;
+		mThisSurfaceView = this;
 		mSaveDirectory = new File(Environment.getExternalStorageDirectory()
 				.getPath() + "/test");
-		mThisSurfaceView = this;
 
 		if (!mSaveDirectory.exists()) {
+			// 保存先フォルダが存在しない時
 			mSaveDirectory.mkdir();
 			Toast.makeText(mAct,
 					mSaveDirectory.getPath() + "写真を保存するディレクトリを作成しました。",
@@ -92,14 +94,13 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 					.show();
 		}
 	}
-	
+
 	// surfaceViewが変更された時
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
 			int height) {
 		Camera.Parameters p = mCamera.getParameters();
-		// p.setPreviewSize(width/2, height/2);//
-		// 機種によって画面いっぱいのサイズではプレビューできない場合がある。
+		// p.setPreviewSize(width, height);//機種によって画面いっぱいのサイズではプレビューできない場合がある。
 
 		try {
 			mCamera.setParameters(p);
@@ -123,6 +124,7 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 			return;
 		}
 		if (mIsTake) {
+			// 現在ファイルの保存処理を行っていなければ保存する
 			savePicture(data);// 写真を保存
 		}
 		// takePicture するとプレビューが停止するので、再度プレビュースタート
@@ -167,13 +169,13 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 
 			// アンドロイドのデータベースへ登録
 			registAndroidDB(imgPath);
-		
+
 			Toast.makeText(mAct, "ファイルを保存しました。", Toast.LENGTH_SHORT).show();
 		} catch (Exception e) {
 			Toast.makeText(mAct, "ファイルの保存に失敗しました。", Toast.LENGTH_SHORT).show();
 		}
 		fos = null;
-		
-		mIsTake = false;//保存終了の状態にする
+
+		mIsTake = false;// 保存終了の状態にする
 	}
 }

@@ -22,8 +22,9 @@ public class TopFragment extends Fragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		
+
 		init();
+		
 		mAct.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         
         LinearLayout l = new LinearLayout(mAct);

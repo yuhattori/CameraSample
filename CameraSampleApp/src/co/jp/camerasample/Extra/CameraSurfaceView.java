@@ -20,6 +20,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
@@ -28,10 +29,12 @@ import android.view.View;
 import android.widget.Toast;
 
 public class CameraSurfaceView extends SurfaceView implements Callback,
-		PictureCallback {
+		PictureCallback, GestureDetector.OnGestureListener,
+		GestureDetector.OnDoubleTapListener {
 	private static final String TAG = CameraSurfaceView.class.getSimpleName();;
 	private Camera mCamera;
 	private CameraSurfaceView mThisSurfaceView;
+	GestureDetector mGestureDetector;
 	Activity mAct;
 	File mSaveDirectory;// 写真保存場所
 	String mPictureName;// 写真の名前
@@ -45,33 +48,16 @@ public class CameraSurfaceView extends SurfaceView implements Callback,
 		holder.addCallback(this);
 		// holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
+		// GestureDetectorインスタンス作成
+		mGestureDetector = new GestureDetector(mAct, this);
+
 		// タッチイベントを設定
 		this.setOnTouchListener(new OnTouchListener() {
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
-				if (event.getAction() == MotionEvent.ACTION_DOWN) {
-					if (!mIsTake) {
-						// 撮影中の2度押し禁止用フラグ
-						mIsTake = true;
-
-						// オートフォーカスを行う
-						mCamera.autoFocus(new Camera.AutoFocusCallback() {
-							@Override
-							public void onAutoFocus(boolean success,
-									Camera camera) {
-								// if (!success) {
-								// Toast.makeText(mAct, "オートフォーカスに失敗しました",
-								// Toast.LENGTH_SHORT).show();
-								// }
-								// 画像取得
-								mCamera.takePicture(
-										null,
-										null,
-										(Camera.PictureCallback) mThisSurfaceView);
-							}
-						});
-					}
-				}
+				Log.d(TAG, "Action");
+				// gestureDetector#onTouchEventメソッドでタッチイベントの判別・振り分けを行う
+				mGestureDetector.onTouchEvent(event);
 				return true;
 			}
 		});
@@ -174,7 +160,7 @@ public class CameraSurfaceView extends SurfaceView implements Callback,
 	private void savePicture(byte[] data) {
 		// byte形式のデータをBitmap形式に変更
 		Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-		data=null;
+		data = null;
 
 		Calendar cal = Calendar.getInstance();
 		SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd_HHmmss");
@@ -187,8 +173,8 @@ public class CameraSurfaceView extends SurfaceView implements Callback,
 			OutputStream ops = new FileOutputStream(imgPath);
 			bitmap.compress(CompressFormat.JPEG, 100, ops);
 			ops.close();
-			ops=null;
-			
+			ops = null;
+
 			// アンドロイドのデータベースへ登録
 			registAndroidDB(imgPath);
 
@@ -198,5 +184,80 @@ public class CameraSurfaceView extends SurfaceView implements Callback,
 		}
 
 		mIsTake = false;// 保存終了の状態にする
+	}
+
+	/* 以下タッチのモーションの設定 */
+
+	@Override
+	public boolean onDown(MotionEvent e) {
+		//trueにするとここで止まるため、falseにする
+		return false;
+	}
+
+	@Override
+	public void onShowPress(MotionEvent e) {
+		// TODO 自動生成されたメソッド・スタブ
+
+	}
+
+	@Override
+	public boolean onSingleTapUp(MotionEvent e) {
+		Log.d(TAG, "SingleTap");
+		if (!mIsTake) {
+			// 撮影中の2度押し禁止用フラグ
+			mIsTake = true;
+
+			// オートフォーカスを行う
+			mCamera.autoFocus(new Camera.AutoFocusCallback() {
+				@Override
+				public void onAutoFocus(boolean success, Camera camera) {
+					// if (!success) {
+					// Toast.makeText(mAct, "オートフォーカスに失敗しました",
+					// Toast.LENGTH_SHORT).show();
+					// }
+					// 画像取得
+					mCamera.takePicture(null, null,
+							(Camera.PictureCallback) mThisSurfaceView);
+				}
+			});
+		}
+		return false;
+	}
+
+	@Override
+	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
+			float distanceY) {
+		Log.d(TAG, "onScroll");
+		return false;
+	}
+
+	@Override
+	public void onLongPress(MotionEvent e) {
+		Log.d(TAG, "onLongPress");
+	}
+
+	@Override
+	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+			float velocityY) {
+		Log.d(TAG, "onFling");
+		return false;
+	}
+
+	@Override
+	public boolean onSingleTapConfirmed(MotionEvent e) {
+		Log.d(TAG, "onSingleTapConfirmed");
+		return false;
+	}
+
+	@Override
+	public boolean onDoubleTap(MotionEvent e) {
+		Log.d(TAG, "onDoubleTap");
+		return false;
+	}
+
+	@Override
+	public boolean onDoubleTapEvent(MotionEvent e) {
+		Log.d(TAG, "onDoubleTapEvent");
+		return false;
 	}
 }

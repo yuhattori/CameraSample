@@ -3,6 +3,7 @@ package co.jp.camerasample.Extra;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -11,6 +12,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
@@ -25,17 +27,17 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
 
-public class CamerSurfaceView extends SurfaceView implements Callback,
+public class CameraSurfaceView extends SurfaceView implements Callback,
 		PictureCallback {
-	private static final String TAG = CamerSurfaceView.class.getSimpleName();;
+	private static final String TAG = CameraSurfaceView.class.getSimpleName();;
 	private Camera mCamera;
-	private CamerSurfaceView mThisSurfaceView;
+	private CameraSurfaceView mThisSurfaceView;
 	Activity mAct;
 	File mSaveDirectory;// 写真保存場所
 	String mPictureName;// 写真の名前
 	private boolean mIsTake = false;// 撮影を連続で2回以上呼ばれないようにする
 
-	public CamerSurfaceView(Context context) {
+	public CameraSurfaceView(Context context) {
 		super(context);
 		init(context);
 
@@ -57,10 +59,10 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 							@Override
 							public void onAutoFocus(boolean success,
 									Camera camera) {
-								if (!success) {
-									Toast.makeText(mAct, "オートフォーカスに失敗しました",
-											Toast.LENGTH_SHORT).show();
-								}
+								// if (!success) {
+								// Toast.makeText(mAct, "オートフォーカスに失敗しました",
+								// Toast.LENGTH_SHORT).show();
+								// }
 								// 画像取得
 								mCamera.takePicture(
 										null,
@@ -170,6 +172,10 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 	 *            　写真データ
 	 */
 	private void savePicture(byte[] data) {
+		// byte形式のデータをBitmap形式に変更
+		Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+		data=null;
+
 		Calendar cal = Calendar.getInstance();
 		SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd_HHmmss");
 		mPictureName = format.format(cal.getTime()) + ".jpg";
@@ -177,12 +183,12 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 		// 保存パス
 		String imgPath = mSaveDirectory.getPath() + "/" + mPictureName;
 		// ファイル保存
-		FileOutputStream fos;
 		try {
-			fos = new FileOutputStream(imgPath, true);
-			fos.write(data);
-			fos.close();
-
+			OutputStream ops = new FileOutputStream(imgPath);
+			bitmap.compress(CompressFormat.JPEG, 100, ops);
+			ops.close();
+			ops=null;
+			
 			// アンドロイドのデータベースへ登録
 			registAndroidDB(imgPath);
 
@@ -190,7 +196,6 @@ public class CamerSurfaceView extends SurfaceView implements Callback,
 		} catch (Exception e) {
 			Toast.makeText(mAct, "ファイルの保存に失敗しました。", Toast.LENGTH_SHORT).show();
 		}
-		fos = null;
 
 		mIsTake = false;// 保存終了の状態にする
 	}

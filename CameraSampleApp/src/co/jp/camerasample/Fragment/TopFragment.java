@@ -22,6 +22,8 @@ import android.widget.LinearLayout;
 public class TopFragment extends Fragment {
 	private static final String TAG = TopFragment.class.getSimpleName();
 	private Activity mAct;
+	private Paint mPaint;
+	private Point mPoint;
 
 	private CameraSurfaceView mCameraSurfaceView;
 
@@ -40,9 +42,8 @@ public class TopFragment extends Fragment {
 			@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
 			@Override
 			protected void onDraw(Canvas canvas) {
-				Paint paint = new Paint();
-				paint.setColor(Color.BLACK);
-				paint.setAlpha(50);
+				mPaint.setColor(Color.BLACK);
+				mPaint.setAlpha(50);
 
 				WindowManager wm = mAct.getWindowManager();
 				// Displayのインスタンス取得
@@ -55,12 +56,11 @@ public class TopFragment extends Fragment {
 					centerX = disp.getWidth() / 2f;
 					centerY = disp.getHeight() / 2f;
 				} else {
-					Point size = new Point();
-					disp.getSize(size);
-					centerX = size.x / 2f;
-					centerY = size.y / 2f;
+					disp.getSize(mPoint);
+					centerX = mPoint.x / 2f;
+					centerY = mPoint.y / 2f;
 				}
-				canvas.drawCircle(centerX, centerY, 180, paint);
+				canvas.drawCircle(centerX, centerY, 180, mPaint);
 			}
 		};
 
@@ -72,6 +72,8 @@ public class TopFragment extends Fragment {
 
 	private void init() {
 		mAct = this.getActivity();
+		mPaint = new Paint();
+		mPoint = new Point();
 
 	}
 }

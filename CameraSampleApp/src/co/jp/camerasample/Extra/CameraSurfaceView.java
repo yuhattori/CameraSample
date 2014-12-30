@@ -203,24 +203,12 @@ public class CameraSurfaceView extends SurfaceView implements Callback,
 	@Override
 	public boolean onSingleTapUp(MotionEvent e) {
 		Log.d(TAG, "SingleTap");
-		if (!mIsTake) {
-			// 撮影中の2度押し禁止用フラグ
-			mIsTake = true;
-
-			// オートフォーカスを行う
-			mCamera.autoFocus(new Camera.AutoFocusCallback() {
-				@Override
-				public void onAutoFocus(boolean success, Camera camera) {
-					// if (!success) {
-					// Toast.makeText(mAct, "オートフォーカスに失敗しました",
-					// Toast.LENGTH_SHORT).show();
-					// }
-					// 画像取得
-					mCamera.takePicture(null, null,
-							(Camera.PictureCallback) mThisSurfaceView);
-				}
-			});
-		}
+		// オートフォーカスを行う
+		mCamera.autoFocus(new Camera.AutoFocusCallback() {
+			@Override
+			public void onAutoFocus(boolean success, Camera camera) {
+			}
+		});
 		return false;
 	}
 
@@ -234,6 +222,14 @@ public class CameraSurfaceView extends SurfaceView implements Callback,
 	@Override
 	public void onLongPress(MotionEvent e) {
 		Log.d(TAG, "onLongPress");
+		if (!mIsTake) {
+			// 撮影中の2度押し禁止用フラグ
+			Toast.makeText(mAct, "保存開始",
+					Toast.LENGTH_SHORT).show();
+			mIsTake = true;
+			mCamera.takePicture(null, null,
+					(Camera.PictureCallback) mThisSurfaceView);
+		}
 	}
 
 	@Override

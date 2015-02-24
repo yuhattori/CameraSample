@@ -14,6 +14,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.os.Environment;
@@ -160,7 +161,7 @@ public class CameraSurfaceView extends SurfaceView implements Callback,
 	private void savePicture(byte[] data) {
 		// byte形式のデータをBitmap形式に変更
 		Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-		data = null;
+		//data = null;
 
 		Calendar cal = Calendar.getInstance();
 		SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd_HHmmss");
@@ -172,6 +173,10 @@ public class CameraSurfaceView extends SurfaceView implements Callback,
 		try {
 			OutputStream ops = new FileOutputStream(imgPath);
 			bitmap.compress(CompressFormat.JPEG, 100, ops);
+			//目的の形に切り抜く
+			Rect rect = new Rect();
+			CuttingPic cp = new CuttingPic(data, rect);
+			cp.run();
 			ops.close();
 			ops = null;
 
